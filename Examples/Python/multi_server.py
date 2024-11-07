@@ -18,24 +18,37 @@ def main() -> None:
         while True:
             read_socket, _, exception_sockets = select.select(sockets_list, [], sockets_list)
             for notified_socket in read_sockets:
-                print(f"notified_socket: {notified_socket}")
+                # print(f"notified_socket: {notified_socket}")
                 if notified_socket == s:
                     conn, addr = notified_socket.accept()
-                    print(f"Connection from {conn}:{addr}")
+                    # print(f"Connection from {conn}:{addr}")
                     print(f"New connection adding to dictionary")
                     sockets_list.append(conn)
                     username = conn.recv(1024)
+                    num_bytes = int(conn.recv(header_length).decode())
+                    print(f"new connection: num_bytes: {num_bytes}")
+
+
+                    username = conn.recv(num_bytes)
+                    print(f"new connection: username: {username}")
                     client_dict[conn] = username.decode()
                 else:
                     # Existing connection
                     #recv message to send to others
                     print(f"Existing connection")
+                    recv_header = conn.recv(header_length)
+                    print(f"recv header: {recv_header}")
+                    recv_header = recv_header.decode()
+                    num_bytes = recv_header
+
+                    recv_message = notified_socket.recv(num_bytes).decode()
                     recv_message = notified_socket.recv(1024).decode()
                     print(f"{client_dict[notified_socket]}> {recv_message}")
                     for client in client_dict:
                         if client == notified_socket:
                             continue
-                        client.send(f"{client_dict[notified_socket]}> {recv_message}".encode())
+                        send_len = len(f"{client_dict[notified_socket]}> {recv_message}\n")
+                        client.send(f"{send_len:<{header_length}}{client_dict[notified_socket]}> {recv_message}".encode())
 
 
 if __name__ == "__main__":

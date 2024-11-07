@@ -11,13 +11,16 @@ def main() -> None:
         s.connect((destaddr, destport))
         s.setblocking(False)
 
-        s.send(username.encode())
+        send_len = len(username)
+        s.send(f"{send_len:<{header_length}}{username}".encode())
 
         while True:
             send_msg = input("Send: ")
             if len(send_msg) > 0:
-                s.send(send_msg.encode())
+                send_len = len(send_msg)
+                s.send(f"{send_len:<{header_length}}{send_msg}".encode())
             try:
+                recv_len = int(s.recv(header_length).decode())
                 recv_msg = s.recv(1024).decode()
                 print(f"{recv_msg}")
             except:
