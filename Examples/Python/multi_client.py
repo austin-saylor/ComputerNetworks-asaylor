@@ -2,8 +2,9 @@ import socket
 
 
 def main() -> None:
-    destinaddr = "127.0.0.1"
+    destaddr = "127.0.0.1"
     destport = 1234
+    header_length = 10
 
     username = input("Enter username: ")
 
@@ -18,10 +19,12 @@ def main() -> None:
             send_msg = input("Send: ")
             if len(send_msg) > 0:
                 send_len = len(send_msg)
+                print(f"send_len: {send_len}")
+                print(f"{send_len:<{header_length}}{send_msg}".encode())
                 s.send(f"{send_len:<{header_length}}{send_msg}".encode())
             try:
                 recv_len = int(s.recv(header_length).decode())
-                recv_msg = s.recv(1024).decode()
+                recv_msg = s.recv(recv_len).decode()
                 print(f"{recv_msg}")
             except:
                 continue
