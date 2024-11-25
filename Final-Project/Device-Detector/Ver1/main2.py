@@ -1,28 +1,73 @@
-from scapy.all import ARP, Ether, srp
+import threading
+from scapy.all import srp, Ether, ARP, sr, IP, ICMP
+import ipaddress
 
+def get_active_hosts_arp(subnet, iface):
+    """
+    Perform ARP scan on a subnet.
+    """
+    print("Starting ARP scan on {}...".format(subnet))
+    try:
+        ans, _ = srp(
+            Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=str(subnet)),
+            timeout=2,
+            retry=1,
+            iface=iface,
+            verbose=0
+        )
+        results = [{'IP': received.psrc, 'MAC': received.hwsrc} for sent, received in ans]
+        return results
+    except Exception as e:
+        print("Error during ARP scan: {}".format(e))
+        return []
 
-target_ip = "200.168.56.1/24"
-arp = ARP(pdst = target_ip)
-ether = Ether(dst="ff:ff:ff:ff:ff:ff")
-packet = ether/arp
+def get_active_hosts_icmp(subnet):
+    """
+    Perform ICMP scan on a subnet.
+    """
+    print("Starting ICMP scan on {}...".format(subnet))
+    try:
+        ans, _ = sr(
+            IP(dst=str(subnet)) / ICMP(),
+            timeout=2,
+            retry=1,
+            verbose=0
+        )
+        results = [{'IP': received.src, 'MAC': 'N/A'} for sent, received in ans]
+        return results
+    except Exception as e:
+        print("Error during ICMP scan: {}".format(e))
+        return []
 
-def print_clients(clients):
-    print("Available devices:")
-    print("IP" + " "*18+"MAC")
+def scan_subnets(target_subnets, iface):
+    results = []
+    threads = []
 
-    for client in clients:
-        print("{:16}    {}".format(client['IP'], client['MAC']))
+    for subnet in target_subnets:
+        # Perform ARP scan in a separate thread
+        t = threading.Thread(target=lambda: results.extend(get_active_hosts_arp(subnet, iface)))
+        threads.append(t)
+        t.start()
 
-def main():
-    result = srp(packet, timeout = 2)[0]
+        # Perform ICMP scan in a separate thread
+        t = threading.Thread(target=lambda: results.extend(get_active_hosts_icmp(subnet)))
+        threads.append(t)
+        t.start()
 
-    clients = []
+    for t in threads:
+        t.join()
 
-    for sent, received in result:
-        clients.append({'IP': received.psrc, 'MAC': received.hwrc})
-    
-    print_clients(clients)
+    return results
 
+def print_result(results):
+    print("{:<15} {:<17}".format("IP", "MAC"))
+    print("-" * 30)
+    for device in results:
+        print("{:<15} {:<17}".format(device['IP'], device['MAC']))
 
 if __name__ == "__main__":
-    main()
+    target_subnets = ["192.168.1.0/24", "192.168.2.0/24"]
+    iface = "eth0"  # Replace with your interface
+    results = scan_subnets(target_subnets, iface)
+    print("\nScan Results:")
+    print_result(results)
