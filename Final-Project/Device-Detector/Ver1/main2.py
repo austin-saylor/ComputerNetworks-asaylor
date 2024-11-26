@@ -2,6 +2,8 @@ import threading
 from scapy.all import srp, Ether, ARP, sr, IP, ICMP
 import ipaddress
 
+# 17-minute runtime
+
 def get_active_hosts_arp(subnet, iface):
     """
     Perform ARP scan on a subnet.
