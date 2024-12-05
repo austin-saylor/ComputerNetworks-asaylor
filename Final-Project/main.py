@@ -1,12 +1,9 @@
-import sys
 import socket
 import fcntl
 import struct
 import ipaddress
 from scapy.all import *
 
-# 8.5-minute runtime with /24
-# 30-second runtime with /28
 
 def get_ip(interface):
     """
@@ -52,7 +49,8 @@ def get_subnets(machine_ip, target_subnets):
         target_ips = [str(ip) for ip in ipaddress.IPv4Network(subnet, strict=False)]
 
         for target_ip in target_ips:
-            if (target_ip == machine_ip):
+            # Check if 'arp_subnet' exists and if the current IP matches the machine IP
+            if not arp_subnet and (target_ip == machine_ip):
                 match = True
 
                 # If the ip matches the machine, set the current subnet as the ARP subnet
@@ -97,8 +95,8 @@ def arp_scan(subnet):
             ans, unans = srp(request, timeout=1, retry=0, iface="eth0", verbose=0)
             for sent, received in ans:
                 # If a response is received, add the ip and mac to their lists
-                ips.append(received.psrc)
-                macs.append(received.hwsrc)
+                ips.append(received.psrc) # Append the IP (protocol) address
+                macs.append(received.hwsrc) # Append the MAC (hardware) address
         result = [ips, macs]
         print("ARP Scan Completed!\n\n")
         return result
@@ -224,7 +222,7 @@ def main():
     target_ips = arp_results[0] + icmp_results
 
     # Run a port scan on the online IPs
-    port_results = port_scan(target_ips, 100)
+    port_results = port_scan(target_ips, 1023)
 
     # Gather and print results
     results = [arp_results, icmp_results, port_results]
