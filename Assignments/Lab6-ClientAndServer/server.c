@@ -41,8 +41,6 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-void string_split(char *s, int index, char *first, char *second);
-
 int main(void)
 {
     int sockfd, new_fd, numbytes;  // listen on sock_fd, new connection on new_fd
@@ -111,7 +109,8 @@ int main(void)
 
     printf("[SERVER]: waiting for connections... \n");
 
-    while(1) {  // main accept() loop
+    while(1) 
+    {  // main accept() loop
         sin_size = sizeof their_addr;
         new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
         if (new_fd == -1) {
@@ -177,36 +176,44 @@ int main(void)
                 }
             } else if (strcmp(buf, "2") == 0) { // File Transfer mode
                 char *mode_init = "[SERVER]: Entered File Transfer Mode!";
-                FILE* file = fopen("file.txt", "r");
+                FILE *file = fopen("file.txt", "r");
                 char line[MAXDATASIZE];
+                size_t bytesRead;
 
                 printf("%s\n", mode_init);
 
                 // Send acknowledgment to the client
                 if (send(new_fd, mode_init, strlen(mode_init), 0) == -1) {
-                    perror("send");
+                    perror("[SERVER]: send");
                     close(new_fd);
                     exit(1);
                 }
 
-                if (file != NULL)
-                {
-                    while(fgets(line, sizeof(line), file))
-                    {
-                        //printf("%s", line);
-                        if (send(new_fd, line, strlen(line), 0) == -1) {
+                if (file == NULL) {
+                    fprintf(stderr, "ERROR: Cannot open file!\n");
+                    printf("[SERVER]: Failed to transfer file.\n");
+                } else {
+                    while ((bytesRead = fread(line, 1, MAXDATASIZE, file)) > 0) {
+                        // Send the chunk to the client
+                        if (send(new_fd, line, bytesRead, 0) == -1) {
                             perror("[SERVER]: send");
+                            fclose(file);
+                            close(new_fd);
                             exit(1);
                         }
+                        printf("[SERVER]: Sent %zu bytes from file\n", bytesRead);
                     }
+
+                    if (ferror(file)) {
+                        fprintf(stderr, "ERROR: File read error occurred!\n");
+                    } else {
+                        printf("[SERVER]: File transfer completed successfully.\n");
+                    }
+
                     fclose(file);
                 }
-                else
-                {
-                    fprintf(stderr, "ERROR: Cannot open file!\n");
-                }
 
-                printf("[SERVER]: Transferred File!\n");
+                close(new_fd); // Close the connection
             } else {
                 printf("ERROR: Unknown mode\n");
             }
@@ -217,24 +224,5 @@ int main(void)
 
         close(new_fd);  // parent doesn't need this
     }
-
     return 0;
-}
-
-void string_split(char *s, int index, char *first, char *second)
-{
-  int length = strlen(s);
-  
-  // we can't do anything if the index is greater than the length of the string
-  if (index < length)
-  {
-    // copy the characters from 0-(index-1) to the first character array
-    for (int i = 0; i < index; i++)
-      first[i] = s[i];
-    first[index] = '\0';
-    
-    // copy the characters from index-strlen(s) to the second character array
-    for (int i = index; i <= length; i++)
-      second[i - index] = s[i];
-  }
 }

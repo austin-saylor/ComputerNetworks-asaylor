@@ -131,17 +131,21 @@ int main(int argc, char *argv[])
             }
         }
     } 
-    else if  (strcmp(argv[2], "2") == 0) {
-        printf("Transferred File: \n");
+    else if  (strcmp(argv[2], "2") == 0) 
+    {
+        printf("Transferred File:\n");
 
-        // Receive response from the server
-        if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+        while ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) > 0) {
+            buf[numbytes] = '\0'; // Null-terminate the buffer
+            printf("%s", buf);    // Print the received chunk
+        }
+
+        if (numbytes == -1) {
             perror("recv");
             exit(1);
         }
 
-        buf[numbytes] = '\0';
-        printf("%s\n", buf);
+        printf("\n[CLIENT]: File transfer completed successfully.\n");
     }
 
     close(sockfd);
