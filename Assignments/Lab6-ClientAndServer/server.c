@@ -191,11 +191,11 @@ int main(void)
 
                 if (file != NULL)
                 {
-                    while(fgets(line, 1000, file))
+                    while(fgets(line, sizeof(line), file))
                     {
                         //printf("%s", line);
                         if (send(new_fd, line, strlen(line), 0) == -1) {
-                            perror("send");
+                            perror("[SERVER]: send");
                             exit(1);
                         }
                     }
@@ -205,6 +205,8 @@ int main(void)
                 {
                     fprintf(stderr, "ERROR: Cannot open file!\n");
                 }
+
+                printf("[SERVER]: Transferred File!\n");
             } else {
                 printf("ERROR: Unknown mode\n");
             }
