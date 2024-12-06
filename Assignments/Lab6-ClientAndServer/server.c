@@ -15,8 +15,9 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#define PORT "3490"  // the port users will be connecting to
+#define PORT "8000"  // the port users will be connecting to
 
+#define MAXDATASIZE 100 // max number of bytes we can get at once 
 #define BACKLOG 10   // how many pending connections queue will hold
 
 void sigchld_handler(int s)
@@ -40,9 +41,13 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+void string_split(char *s, int index, char *first, char *second);
+
 int main(void)
 {
-    int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
+    int sockfd, new_fd, numbytes;  // listen on sock_fd, new connection on new_fd
+    char buf[MAXDATASIZE];
+    char msg[MAXDATASIZE];
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage their_addr; // connector's address information
     socklen_t sin_size;
@@ -65,7 +70,7 @@ int main(void)
     for(p = servinfo; p != NULL; p = p->ai_next) {
         if ((sockfd = socket(p->ai_family, p->ai_socktype,
                 p->ai_protocol)) == -1) {
-            perror("server: socket");
+            perror("[SERVER]: socket");
             continue;
         }
 
@@ -77,7 +82,7 @@ int main(void)
 
         if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(sockfd);
-            perror("server: bind");
+            perror("[SERVER]: bind");
             continue;
         }
 
@@ -87,7 +92,7 @@ int main(void)
     freeaddrinfo(servinfo); // all done with this structure
 
     if (p == NULL)  {
-        fprintf(stderr, "server: failed to bind\n");
+        fprintf(stderr, "[SERVER]: failed to bind\n");
         exit(1);
     }
 
@@ -104,7 +109,7 @@ int main(void)
         exit(1);
     }
 
-    printf("server: waiting for connections...\n");
+    printf("[SERVER]: waiting for connections... \n");
 
     while(1) {  // main accept() loop
         sin_size = sizeof their_addr;
@@ -117,17 +122,117 @@ int main(void)
         inet_ntop(their_addr.ss_family,
             get_in_addr((struct sockaddr *)&their_addr),
             s, sizeof s);
-        printf("server: got connection from %s\n", s);
+        printf("[SERVER]: got connection from %s\n", s);
 
         if (!fork()) { // this is the child process
             close(sockfd); // child doesn't need the listener
-            if (send(new_fd, "Hello, world!", 13, 0) == -1)
-                perror("send");
-            close(new_fd);
+
+            // Receive the mode from the client
+            if ((numbytes = recv(new_fd, buf, MAXDATASIZE-1, 0)) == -1) {
+                perror("recv");
+                close(new_fd);
+                exit(1);
+            }
+            buf[numbytes] = '\0'; // Null-terminate the received string
+
+            // Parse the mode
+            if (strcmp(buf, "1") == 0) { // Echo mode
+                char *mode_init = "[SERVER]: Entered Echo Mode!";
+                char echo[MAXDATASIZE];
+
+                printf("%s\n", mode_init);
+
+                // Send acknowledgment to the client
+                if (send(new_fd, mode_init, strlen(mode_init), 0) == -1) {
+                    perror("[SERVER]: send");
+                    close(new_fd);
+                    exit(1);
+                }
+
+                while (1) { // Echo loop
+                    if ((numbytes = recv(new_fd, echo, MAXDATASIZE-1, 0)) == -1) {
+                        perror("[SERVER]: recv");
+                        break;
+                    }
+
+                    echo[numbytes] = '\0'; // Null-terminate received message
+
+                    if (strcmp(echo, "close") == 0) { // Client wants to end the connection
+                        // Send a goodbye message before closing
+                        if (send(new_fd, "Goodbye", 7, 0) == -1) {
+                            perror("[SERVER] send");
+                        }
+
+                        printf("[SERVER]: Closed client connection");
+                        break;
+                    }
+
+                    // Echo the message back to the client
+                    if (send(new_fd, echo, strlen(echo), 0) == -1) {
+                        perror("send");
+                        break;
+                    }
+
+                    printf("[SERVER]: echoed: '%s'\n", echo);
+                }
+            } else if (strcmp(buf, "2") == 0) { // File Transfer mode
+                char *mode_init = "[SERVER]: Entered File Transfer Mode!";
+                FILE* file = fopen("file.txt", "r");
+                char line[MAXDATASIZE];
+
+                printf("%s\n", mode_init);
+
+                // Send acknowledgment to the client
+                if (send(new_fd, mode_init, strlen(mode_init), 0) == -1) {
+                    perror("send");
+                    close(new_fd);
+                    exit(1);
+                }
+
+                if (file != NULL)
+                {
+                    while(fgets(line, 1000, file))
+                    {
+                        //printf("%s", line);
+                        if (send(new_fd, line, strlen(line), 0) == -1) {
+                            perror("send");
+                            exit(1);
+                        }
+                    }
+                    fclose(file);
+                }
+                else
+                {
+                    fprintf(stderr, "ERROR: Cannot open file!\n");
+                }
+            } else {
+                printf("ERROR: Unknown mode\n");
+            }
+
+            close(new_fd); // Close the connection
             exit(0);
         }
+
         close(new_fd);  // parent doesn't need this
     }
 
     return 0;
+}
+
+void string_split(char *s, int index, char *first, char *second)
+{
+  int length = strlen(s);
+  
+  // we can't do anything if the index is greater than the length of the string
+  if (index < length)
+  {
+    // copy the characters from 0-(index-1) to the first character array
+    for (int i = 0; i < index; i++)
+      first[i] = s[i];
+    first[index] = '\0';
+    
+    // copy the characters from index-strlen(s) to the second character array
+    for (int i = index; i <= length; i++)
+      second[i - index] = s[i];
+  }
 }

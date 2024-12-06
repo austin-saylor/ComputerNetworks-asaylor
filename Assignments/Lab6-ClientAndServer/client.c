@@ -14,7 +14,7 @@
 
 #include <arpa/inet.h>
 
-#define PORT "3490" // the port client will be connecting to 
+#define PORT "8000" // the port client will be connecting to 
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
@@ -32,11 +32,12 @@ int main(int argc, char *argv[])
 {
     int sockfd, numbytes;  
     char buf[MAXDATASIZE];
+    char msg[MAXDATASIZE];
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char s[INET6_ADDRSTRLEN];
 
-    if (argc != 2) {
+    if (argc != 3) {
         fprintf(stderr,"usage: client hostname\n");
         exit(1);
     }
@@ -74,20 +75,75 @@ int main(int argc, char *argv[])
 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
             s, sizeof s);
-    printf("client: connecting to %s\n", s);
+    printf("[CLIENT]: connecting to %s\n", s);
 
     freeaddrinfo(servinfo); // all done with this structure
 
+    // Get message from user
+    /*
+    printf("Enter a message to send: ");
+    fgets(message, MAXDATASIZE, stdin);
+    message[strcspn(message, "\n")] = '\0'; // Remove newline character
+    */
+
+    // Send the message to the server
+    if (send(sockfd, argv[2], strlen(argv[2]), 0) == -1) {
+        perror("send");
+        exit(1);
+    }
+    printf("[CLIENT]: message sent\n");
+
+    // Receive response from the server
     if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
         perror("recv");
         exit(1);
     }
 
     buf[numbytes] = '\0';
+    printf("[CLIENT]: message received: '%s'\n",buf);
 
-    printf("client: received '%s'\n",buf);
+    if (strcmp(argv[2], "1") == 0) {
+        while (strcmp(buf, "Goodbye") != 0) {
+            // Get message from user
+            printf("[CLIENT]: Enter a message to send: ");
+            fgets(msg, MAXDATASIZE, stdin);
+            msg[strcspn(msg, "\n")] = '\0'; // Remove newline character
+
+            // Send the message to the server
+            if (send(sockfd, msg, strlen(msg), 0) == -1) {
+                perror("send");
+                exit(1);
+            }
+            printf("[CLIENT]: message sent!\n");
+
+            // Receive response from the server
+            if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+                perror("recv");
+                exit(1);
+            }
+
+            buf[numbytes] = '\0';
+
+            if (strcmp(buf, "Goodbye") == 0) {
+                printf("[CLIENT]: %s!\n", buf);
+            } else {
+                printf("[CLIENT]: message received: '%s'\n", buf);
+            }
+        }
+    } 
+    else if  (strcmp(argv[2], "2") == 0) {
+        printf("Transferred File: \n");
+
+        // Receive response from the server
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+            perror("recv");
+            exit(1);
+        }
+
+        buf[numbytes] = '\0';
+        printf("%s\n", buf);
+    }
 
     close(sockfd);
-
     return 0;
 }
