@@ -207,7 +207,7 @@ int main(void)
     char ipstr[INET6_ADDRSTRLEN];
     int new_fd;
 
-    printf("[SERVER]: waiting for connections...\n");
+    printf("[SERVER]: Waiting for connections...\n");
 
     while (1) {
         sin_size = sizeof their_addr;
@@ -222,7 +222,7 @@ int main(void)
 
         // Get the client's IP address
         inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), ipstr, sizeof ipstr);
-        printf("[SERVER]: got connection from %s\n", ipstr);
+        printf("[SERVER]: Got connection from %s\n", ipstr);
 
         if (!fork()) 
         {

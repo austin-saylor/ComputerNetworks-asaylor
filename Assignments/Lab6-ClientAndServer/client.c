@@ -71,7 +71,7 @@ int connect_to_server(const char *hostname)
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), ipstr, sizeof ipstr);
 
     // Print the connected IP
-    printf("[CLIENT]: connecting to %s\n", ipstr);
+    printf("[CLIENT]: Connecting to %s\n", ipstr);
 
     // Free the linked list
     freeaddrinfo(servinfo);
@@ -115,7 +115,7 @@ void echo_mode(int sockfd)
         else
         {
             // Print the echoed message
-            printf("[CLIENT]: message received: '%s'\n", buf);
+            printf("[CLIENT]: Message received: '%s'\n", buf);
         }
     }
 }
