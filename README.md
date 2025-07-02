@@ -15,7 +15,7 @@ This repository contains the work I did for a course on computer networking. In 
 | [Final-Project]    | A network scanner utilizing IP addresses, ARP scanning, ICMP scanning, and port scanning. |
 
 ## 🗨️ Contact Information
-![LinkedIn](https://img.shields.io/badge/LinkedIn-007EBB)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-007EBB)](https://www.linkedin.com/in/austin-saylor-08b1a4209/)
 
 [LinkedIn]: https://www.linkedin.com/in/austin-saylor-08b1a4209/
 [Basic-Socket]: https://github.com/austin-saylor/ComputerNetworks-asaylor/tree/main/Projects/Assignments/BasicSocket
