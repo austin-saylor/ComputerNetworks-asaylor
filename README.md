@@ -3,10 +3,7 @@
 
 This repository contains the work I did for a course on computer networking. In this course, I worked on projects related to sockets, virtual machines, routers, switches, and building a virtual network with these tools in GNS3. My final project for this course was a network scanner which utilizes IP addresses and uses ARP, ICMP, and port scanning.
 
-## Contact Information
-[LinkedIn]
-
-## Projects
+## 💻 Projects
 
 | Project    | Description                                   |
 | ------------- | --------------------------------------------- |
@@ -16,6 +13,9 @@ This repository contains the work I did for a course on computer networking. In 
 | [Lab2-Routers]    | A lab exercise which tests network connectivity through static routing. |
 | [Lab3-NetworkRouting]    | A lab exercise which focused on building a network using VMs, routers, and switches, then testing its connectivity. |
 | [Final-Project]    | A network scanner utilizing IP addresses, ARP scanning, ICMP scanning, and port scanning. |
+
+## 🗨️ Contact Information
+![LinkedIn](https://img.shields.io/badge/LinkedIn-007EBB)
 
 [LinkedIn]: https://www.linkedin.com/in/austin-saylor-08b1a4209/
 [Basic-Socket]: https://github.com/austin-saylor/ComputerNetworks-asaylor/tree/main/Projects/Assignments/BasicSocket
