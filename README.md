@@ -1,3 +1,4 @@
+![License](https://img.shields.io/badge/License-MIT-green)
 # Computer Networks - Austin Saylor, Fall 2024
 
 This repository contains the work I did for a course on computer networking. In this course, I worked on projects related to sockets, virtual machines, routers, switches, and building a virtual network with these tools in GNS3. My final project for this course was a network scanner which utilizes IP addresses and uses ARP, ICMP, and port scanning.
