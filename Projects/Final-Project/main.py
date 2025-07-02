@@ -133,7 +133,7 @@ def icmp_scan(target_subnets):
 
 def port_scan(target_ips, n):
     """
-    Execute a port scan on ports 1 through 'p' on the given
+    Execute a port scan on ports 1 through 'n' on the given
     ip addresses.
 
     :param target_ips: list of strings representing the ip addresses
